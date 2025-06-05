@@ -6,6 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
 from langchain.schema import HumanMessage, AIMessage
+from IPython.display import Image
 
 load_dotenv()
 
@@ -20,6 +21,16 @@ class MessageClassifier(BaseModel):
 class State(TypedDict):
     messages: list
     message_type: str | None
+    finshed: bool | None
+
+def human(state: State) -> State:
+    message = input("Enter message: ")
+    """Add a human message to the state."""
+    return {
+        "messages": add_messages(state["messages"], HumanMessage(content=message)),
+        "message_type": state.get("message_type"),
+        "finished": message.lower() in ["exit", "quit", "done","bye"]
+    }
 
 def classify_message(state: State) -> State:
     last_message = state["messages"][-1]
@@ -39,12 +50,6 @@ def classify_message(state: State) -> State:
         "message_type": result.message_type
     }
 
-def router(state: State) -> State:
-    return {
-        "messages" : state["messages"],
-        "message_type" : state.get("message_type", "logical")
-    }
-
 def therapist_agent(state: State) -> State:
     last_message = state["messages"][-1]
 
@@ -58,6 +63,7 @@ Avoid giving logical solutions unless explicitly asked."""
         last_message
     ]
     reply = llm.invoke(messages)
+    print(f"Therapist agent reply: {reply.content}")
     return {
         "messages": add_messages(state["messages"], AIMessage(content=reply.content)),
         "message_type": state.get("message_type")
@@ -76,6 +82,7 @@ Be direct and straightforward in your responses."""
         last_message
     ]
     reply = llm.invoke(messages)
+    print(f"Logical agent reply: {reply.content}")
     return {
         "messages": add_messages(state["messages"], AIMessage(content=reply.content)),
         "message_type": state.get("message_type")
@@ -83,43 +90,47 @@ Be direct and straightforward in your responses."""
 
 # Build the graph
 graph_builder = StateGraph(State)
-
+graph_builder.add_node("human", human)
 graph_builder.add_node("classifier", classify_message)
-graph_builder.add_node("router", router)
+# graph_builder.add_node("router", router)
 graph_builder.add_node("therapist", therapist_agent)
 graph_builder.add_node("logical", logical_agent)
 
-graph_builder.add_edge(START, "classifier")
-graph_builder.add_edge("classifier", "router")
+graph_builder.add_edge(START, "human")
 
-graph_builder.add_conditional_edges(
-    "router",
+graph_builder.add_conditional_edges("human", 
+    lambda state: state.get("finished", False),
+    {False: "classifier", True: END}
+)
+graph_builder.add_conditional_edges("classifier",
     lambda state: state["message_type"],
     {"emotional": "therapist", "logical": "logical"}
 )
 
-graph_builder.add_edge("therapist", END)
-graph_builder.add_edge("logical", END)
+graph_builder.add_edge("therapist", "human")
+graph_builder.add_edge("logical", "human")
 
 graph = graph_builder.compile()
+
+def save_graph_visualization(graph):
+    """Save graph visualization if possible."""
+    try:
+        png_data = graph.get_graph().draw_mermaid_png()
+        with open("chatbot_graph.png", "wb") as f:
+            f.write(png_data)
+        print("Graph visualization saved as chatbot_graph.png")
+    except Exception as e:
+        print(f"Could not save graph visualization: {e}")
+
 
 # Chat loop
 def run_chatbot():
     state: State = {"messages": [], "message_type": None}
 
-    while True:
-        user_input = input("Message: ")
-        if user_input.lower().strip() == "exit":
-            print("Bye")
-            break
+    try:
+        state = graph.invoke(state)
+    except Exception as e:
+        print(f"Error: {e}")
 
-        state["messages"] = add_messages(state["messages"], HumanMessage(content=user_input))
-
-        try:
-            state = graph.invoke(state)
-            last_message = state["messages"][-1]
-            print(f"Assistant: {last_message.content}")
-        except Exception as e:
-            print(f"Error: {e}")
-
+save_graph_visualization(graph)
 run_chatbot()
