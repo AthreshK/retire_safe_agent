@@ -6,7 +6,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
 from langchain.schema import HumanMessage, AIMessage, SystemMessage, BaseMessage
-from IPython.display import Image
 
 # Load all the env variables from .env file, the API key
 load_dotenv()
@@ -154,7 +153,7 @@ def save_graph_visualization(graph):
         png_data = graph.get_graph().draw_mermaid_png()
         with open("emo_logic_graph.png", "wb") as f:
             f.write(png_data)
-        print("Graph visualization saved as chatbot_graph.png")
+        print("Graph visualization saved as emo_logic_graph.png")
     except Exception as e:
         print(f"Could not save graph visualization: {e}")
 
