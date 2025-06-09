@@ -1,0 +1,5 @@
+type,age,amount,reason
+deposit,50,10000,End-of-career bonus
+deposit,55,15000,Selling second car
+withdrawal,60,8000,Medical expense
+withdrawal,62,5000,Family trip

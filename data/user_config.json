@@ -1,0 +1,7 @@
+{
+  "initial_savings": 150000,
+  "monthly_withdrawal": 1000,
+  "interest_rate": 5.0,
+  "inflation_rate": 2.5,
+  "user_age": 45
+}
