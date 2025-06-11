@@ -1,4 +1,3 @@
-import asyncio
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from typing import Annotated, TypedDict, List, Optional
@@ -82,7 +81,7 @@ class RetirementState(TypedDict, total=False):
 
 
 # -----------------------------
-# Data Loading & Description
+# Data handling and Prediction Logic
 # -----------------------------
 
 def read_user_data(state: RetirementState) -> RetirementState:
@@ -226,6 +225,9 @@ def generate_prediction_report(state: RetirementState) -> tuple:
     # returns a tuple of (report list, total years until depletion)
     return (reports, round(total_years, 3))
 
+# -----------------------------
+# Tools 
+# -----------------------------
 
 @tool
 def add_deposit_tool(tool_call_id: Annotated[str, InjectedToolCallId], age: int, amount: float, reason: Optional[str] = None, state: Annotated[RetirementState, InjectedState] = None) -> Command:
@@ -439,6 +441,7 @@ def update_user_config_tool(
             content="User configuration updated successfully."
         )]
     })
+    
 # -----------------------------
 # LLM and Graph Logic
 # -----------------------------
