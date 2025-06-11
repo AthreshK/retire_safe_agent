@@ -27,8 +27,8 @@ This project is an interactive, tool-augmented retirement planning assistant bui
 
 Clone the repo:
 ```bash 
-git clone https://github.com/yourusername/retirement-agent-langgraph.git
-cd retirement-agent-langgraph
+git clone https://github.com/AthreshK/retire_safe_agent.git
+cd retire_safe_agent
 ```
 
 Install dependencies using uv
